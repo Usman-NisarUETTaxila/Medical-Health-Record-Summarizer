@@ -66,9 +66,9 @@ python manage.py runserver
 - **Admin Panel** → http://127.0.0.1:8000/admin/
 - **Get All Patients (List)** → http://127.0.0.1:8000/api/patients/  (GET)
 - **Add New Patient** → http://127.0.0.1:8000/api/patients/  (POST)
-- **Get Patient by ID** → http://127.0.0.1:8000/api/patients/<id>/  (GET)
-- **Update Patient by ID** → http://127.0.0.1:8000/api/patients/<id>/  (PUT/PATCH)
-- **Delete Patient by ID** → http://127.0.0.1:8000/api/patients/<id>/  (DELETE)
+- **Get Patient by ID** → http://127.0.0.1:8000/api/patients/id/  (GET)
+- **Update Patient by ID** → http://127.0.0.1:8000/api/patients/id/  (PUT/PATCH)
+- **Delete Patient by ID** → http://127.0.0.1:8000/api/patients/id/  (DELETE)
 
 ---
 
