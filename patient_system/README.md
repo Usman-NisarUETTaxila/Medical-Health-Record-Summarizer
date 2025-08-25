@@ -62,9 +62,13 @@ python manage.py migrate
 python manage.py runserver
 ```
 
-### 7. Now open in browser (make change in url)
-- For Admin Panel → http://127.0.0.1:8000/admin/
-- For Patients API → http://127.0.0.1:8000/api/patients/
+### 7. Now open in browser (API Endpoints)
+- **Admin Panel** → http://127.0.0.1:8000/admin/
+- **Get All Patients (List)** → http://127.0.0.1:8000/api/patients/  (GET)
+- **Add New Patient** → http://127.0.0.1:8000/api/patients/  (POST)
+- **Get Patient by ID** → http://127.0.0.1:8000/api/patients/<id>/  (GET)
+- **Update Patient by ID** → http://127.0.0.1:8000/api/patients/<id>/  (PUT/PATCH)
+- **Delete Patient by ID** → http://127.0.0.1:8000/api/patients/<id>/  (DELETE)
 
 ---
 
