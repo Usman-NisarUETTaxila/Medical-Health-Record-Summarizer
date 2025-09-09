@@ -16,14 +16,22 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path, include
-from rest_framework import routers
-from patients.views import PatientViewSet
+from rest_framework.routers import DefaultRouter
 
-router = routers.DefaultRouter()
+from patients.views import (
+    PatientViewSet, PatientDetailViewSet,
+    TreatmentViewSet, MedicineViewSet, AppointmentViewSet
+)
+
+router = DefaultRouter()
 router.register(r'patients', PatientViewSet)
+router.register(r'patient-details', PatientDetailViewSet)
+router.register(r'treatments', TreatmentViewSet)
+router.register(r'medicines', MedicineViewSet)
+router.register(r'appointments', AppointmentViewSet)
 
 urlpatterns = [
-    path('admin/', admin.site.urls),
+    path('admin/', admin.site.urls), 
     path('api/', include(router.urls)),  
 ]
 
