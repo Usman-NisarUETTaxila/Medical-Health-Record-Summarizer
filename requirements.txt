@@ -8,3 +8,5 @@ pydantic
 duckduckgo-search
 langchain-google-genai
 google-generativeai
+gradio
+django
