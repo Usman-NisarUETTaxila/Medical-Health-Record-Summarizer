@@ -10,37 +10,36 @@ def fetch_medical_report_api():
     """
     time.sleep(2)  #  delay
     report = {
-        "patient_id": random.randint(1000, 9999),
-        "age": 45,
-        "gender": "Male",
-        "diagnosis": "Hypertension",
-        "symptoms": ["Headache", "Dizziness", "Blurred vision"],
-        "medications": ["Amlodipine 5mg daily", "Losartan 50mg daily"],
-        "lab_results": {"BP": "160/100 mmHg", "Cholesterol": "220 mg/dl"},
     }
+
+    if report == {}:
+        raise gr.Error("Data not loaded!")
     return json.dumps(report, indent=2)
 
-def summarize_report(report_json):
-    report = json.loads(report_json)
-    summary = f"""
-### 🧑 Patient Info
-- **ID:** {report['patient_id']}
-- **Age:** {report['age']}
-- **Gender:** {report['gender']}
+def summarize_report(report_json): 
+    try:
+        report = json.loads(report_json)
+        summary = f"""
+    ### 🧑 Patient Info
+    - **ID:** {report['patient_id']}
+    - **Age:** {report['age']}
+    - **Gender:** {report['gender']}
 
-### 🩺 Diagnosis
-- **Condition:** {report['diagnosis']}
+    ### 🩺 Diagnosis
+    - **Condition:** {report['diagnosis']}
 
-### ⚠️ Key Symptoms
-- {', '.join(report['symptoms'])}
+    ### ⚠️ Key Symptoms
+    - {', '.join(report['symptoms'])}
 
-### 💊 Medications
-- {', '.join(report['medications'])}
+    ### 💊 Medications
+    - {', '.join(report['medications'])}
 
-### 🧪 Lab Results
-- **BP:** {report['lab_results']['BP']}
-- **Cholesterol:** {report['lab_results']['Cholesterol']}
-"""
+    ### 🧪 Lab Results
+    - **BP:** {report['lab_results']['BP']}
+    - **Cholesterol:** {report['lab_results']['Cholesterol']}
+    """
+    except json.decoder.JSONDecodeError as e:
+        raise gr.Error("Cannot Summarize Empty Data.")
     return summary
 
 
@@ -65,7 +64,7 @@ with gr.Blocks(theme=gr.themes.Soft()) as demo:
             output_box = gr.Markdown()
 
     # Status
-    status = gr.Label(value="")
+    status = gr.Label(value="", label="Status")
 
 
     def fetch_with_loader():
