@@ -47,28 +47,18 @@ venv\Scripts\activate
 pip install -r requirements.txt
 ```
 
-### 4. Apply Database Integrations
-```bash
-python manage.py migrate
-```
-
-### 5. Create Superuser (Admin Login)
-```bash
-python manage.py migrate
-```
-
-### 6. Run the development server
+### 4. Run the development server
 ```bash
 python manage.py runserver
 ```
 
 ### 7. Now open in browser (API Endpoints)
 - **Admin Panel** → http://127.0.0.1:8000/admin/
-- **Get All Patients (List)** → http://127.0.0.1:8000/api/patients/  (GET)
-- **Add New Patient** → http://127.0.0.1:8000/api/patients/  (POST)
-- **Get Patient by ID** → http://127.0.0.1:8000/api/patients/id/  (GET)
-- **Update Patient by ID** → http://127.0.0.1:8000/api/patients/id/  (PUT/PATCH)
-- **Delete Patient by ID** → http://127.0.0.1:8000/api/patients/id/  (DELETE)
+- **Get All Patients (List)** → http://127.0.0.1:8000/patient-app/api/patients/  (GET)
+- **Add New Patient** → http://127.0.0.1:8000/patient-app/api/patients/  (POST)
+- **Get Patient by ID** → http://127.0.0.1:8000/patient-app/api/patients/id/  (GET)
+- **Update Patient by ID** → http://127.0.0.1:8000/patient-app/api/patients/id/  (PUT/PATCH)
+- **Delete Patient by ID** → http://127.0.0.1:8000/patient-app/api/patients/id/  (DELETE)
 
 ---
 
