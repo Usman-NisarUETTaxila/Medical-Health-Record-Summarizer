@@ -23,21 +23,21 @@ class MedicalHistoryAdmin(admin.ModelAdmin):
 
 
 @admin.register(CheckUp)
-class CurrentVisitAdmin(admin.ModelAdmin):
+class CheckUpAdmin(admin.ModelAdmin):
     list_display = ("id", "patient", "symptoms", "current_diagnosis","date_of_checkup", "blood_pressure", "heart_rate", "temperature")
     search_fields = ("patient__patient_name", "symptoms", "current_diagnosis", "date_of_checkup")
 
 
 @admin.register(LabTests)
-class InvestigationAdmin(admin.ModelAdmin):
+class LabTestAdmin(admin.ModelAdmin):
     list_display = ("id", "patient", "lab_results", "imaging", "other_tests")
     search_fields = ("patient__patient_name", "lab_results", "imaging", "other_tests")
 
 
 @admin.register(TreatmentPlan)
 class TreatmentPlanAdmin(admin.ModelAdmin):
-    list_display = ("id", "patient", "checkup" ,"related_disease", "prescribed_medications", "procedures","next_followup_date" ,"lifestyle_recommendations", "physiotherapy_advice")
-    search_fields = ("patient__patient_name", "checkup__date_of_checkup" "prescribed_medications", "procedures", "next_followup_date")
+    list_display = ("id", "patient", "checkup" ,"related_disease","assigned_doctor",  "prescribed_medications", "procedures","next_followup_date" ,"lifestyle_recommendations", "physiotherapy_advice")
+    search_fields = ("patient__patient_name", "checkup__date_of_checkup" "prescribed_medications", "procedures", "next_followup_date", "assigned_doctor")
 
 @admin.register(AdditionalNote)
 class AdditionalNoteAdmin(admin.ModelAdmin):

@@ -67,6 +67,7 @@ class TreatmentPlan(models.Model):
     patient = models.ForeignKey(Patient, on_delete=models.CASCADE, related_name="treatments")
     checkup = models.ForeignKey(CheckUp, on_delete=models.CASCADE, related_name="checkup")
     related_disease = models.CharField(max_length=100)
+    assigned_doctor = models.CharField(max_length=100)
     prescribed_medications = models.TextField()
     procedures = models.TextField()
     next_followup_date = models.DateField()

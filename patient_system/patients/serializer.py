@@ -11,15 +11,15 @@ class MedicalHistorySerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 
-class CurrentVisitSerializer(serializers.ModelSerializer):
+class CheckUpSerializer(serializers.ModelSerializer):
     class Meta:
-        model = CurrentVisit
+        model = CheckUp
         fields = '__all__'
 
 
-class InvestigationSerializer(serializers.ModelSerializer):
+class LabTestSerializer(serializers.ModelSerializer):
     class Meta:
-        model = Investigation
+        model = LabTests
         fields = '__all__'
 
 
@@ -37,8 +37,8 @@ class AdditionalNoteSerializer(serializers.ModelSerializer):
 
 class PatientSerializer(serializers.ModelSerializer):
     medical_history = MedicalHistorySerializer(many=True, read_only=True)
-    checkups = CurrentVisitSerializer(many=True, read_only=True)
-    labtests = InvestigationSerializer(many=True, read_only=True)
+    checkups = CheckUpSerializer(many=True, read_only=True)
+    labtests = LabTestSerializer(many=True, read_only=True)
     treatments = TreatmentPlanSerializer(many=True, read_only=True)
     notes = AdditionalNoteSerializer(many=True, read_only=True)
 
