@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+{% load static %}
+<head>
+  <meta charset="UTF-8">
+  <title>Patients List</title>
+  <link rel="stylesheet" href="{% static 'css/styles.css' %}">
+</head>
+<body>
+  <div class="container">
+    <h1>Patients</h1>
+
+    <a href="{% url 'create_complete_patient_form' %}" class="btn">Add New Patient</a>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Checkups</th>
+          <th>Lab Tests</th>
+          <th>Treatments</th>
+          <th>Last Checkup</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for item in patient_data %}
+          <tr>
+            <td>{{ item.patient.patient_name }}</td>
+            <td>{{ item.checkups_count }}</td>
+            <td>{{ item.lab_tests_count }}</td>
+            <td>{{ item.treatments_count }}</td>
+            <td>
+              {% if item.last_checkup %}
+                {{ item.last_checkup.date_of_checkup }}
+              {% else %}
+                N/A
+              {% endif %}
+            </td>
+            <td>
+              <a href="{% url 'patient_detail' item.patient.id %}" class="btn small">View</a>
+              <a href="{% url 'edit_complete_patient_form' item.patient.id %}" class="btn small">Edit</a>
+              <a href="{% url 'delete_patient' item.patient.id %}" class="btn small danger">Delete</a>
+            </td>
+          </tr>
+        {% empty %}
+          <tr>
+            <td colspan="6">No patients found.</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</body>
+</html>

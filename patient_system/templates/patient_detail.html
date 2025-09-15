@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+{% load static %}
+<head>
+  <meta charset="UTF-8">
+  <title>{{ patient.patient_name }}</title>
+  <link rel="stylesheet" href="{% static 'css/styles.css' %}">
+</head>
+<body>
+  <div class="container">
+    <h1>{{ patient.patient_name }}</h1>
+
+    <section>
+      <h2>Medical History</h2>
+      {% if medical_history %}
+        <p>{{ medical_history|linebreaks }}</p>
+      {% else %}
+        <p>No medical history available.</p>
+      {% endif %}
+    </section>
+
+    <section>
+      <h2>Checkups</h2>
+      <ul>
+        {% for checkup in checkups %}
+          <li>{{ checkup.date_of_checkup }} - {{ checkup.current_diagnosis }}</li>
+        {% empty %}
+          <li>No checkups recorded.</li>
+        {% endfor %}
+      </ul>
+    </section>
+
+    <section>
+      <h2>Lab Tests</h2>
+      <ul>
+        {% for test in lab_tests %}
+          <li>{{ test.lab_results }}</li>
+        {% empty %}
+          <li>No lab tests recorded.</li>
+        {% endfor %}
+      </ul>
+    </section>
+
+    <section>
+      <h2>Treatments</h2>
+      <ul>
+        {% for t in treatments %}
+          <li>{{ t.related_disease }} (Next follow-up: {{ t.next_followup_date }})</li>
+        {% empty %}
+          <li>No treatments recorded.</li>
+        {% endfor %}
+      </ul>
+    </section>
+
+    <section>
+      <h2>Notes</h2>
+      <ul>
+        {% for note in notes %}
+          <li>{{ note.doctor_remarks }}</li>
+        {% empty %}
+          <li>No notes available.</li>
+        {% endfor %}
+      </ul>
+    </section>
+
+    <a href="{% url 'edit_complete_patient_form' patient.id %}" class="btn">Edit</a>
+    <a href="{% url 'patient_list' %}" class="btn secondary">Back to List</a>
+  </div>
+</body>
+</html>

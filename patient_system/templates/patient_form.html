@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+ {% load static %}
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>{{ page_title }}</title>
+  <link rel="stylesheet" href="{% static 'css/styles.css' %}">
+</head>
+<body>
+  <div class="container">
+    <h1>{{ page_title }}</h1>
+
+    <form method="post">
+      {% csrf_token %}
+      
+      <fieldset>
+        <legend>Patient Info</legend>
+        {{ patient_form.as_p }}
+      </fieldset>
+
+      <fieldset>
+        <legend>Medical History</legend>
+        {{ medical_history_form.as_p }}
+      </fieldset>
+
+      <fieldset>
+        <legend>Checkups</legend>
+        {{ checkup_formset.management_form }}
+        {% for form in checkup_formset %}
+          <div class="formset-item">{{ form.as_p }}</div>
+        {% endfor %}
+      </fieldset>
+
+      <fieldset>
+        <legend>Lab Tests</legend>
+        {{ lab_tests_formset.management_form }}
+        {% for form in lab_tests_formset %}
+          <div class="formset-item">{{ form.as_p }}</div>
+        {% endfor %}
+      </fieldset>
+
+      <fieldset>
+        <legend>Treatment Plans</legend>
+        {{ treatment_formset.management_form }}
+        {% for form in treatment_formset %}
+          <div class="formset-item">{{ form.as_p }}</div>
+        {% endfor %}
+      </fieldset>
+
+      <fieldset>
+        <legend>Notes</legend>
+        {{ notes_formset.management_form }}
+        {% for form in notes_formset %}
+          <div class="formset-item">{{ form.as_p }}</div>
+        {% endfor %}
+      </fieldset>
+
+      <button type="submit" class="btn">Save</button>
+      <a href="{% url 'patient_list' %}" class="btn secondary">Cancel</a>
+    </form>
+  </div>
+</body>
+</html>
