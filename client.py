@@ -1,5 +1,5 @@
 import requests 
-endpoint = "http://localhost:8000/patient-app/api/patients/"
+endpoint = "http://localhost:8000/patient-app/api/patients/1/"
 response = requests.get(url=endpoint)
 print(response.status_code)
 print(response.text)
