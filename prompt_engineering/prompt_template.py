@@ -1,137 +1,150 @@
 import os
 import json
+import re
+from langchain_core.runnables import RunnableSequence
 from langchain.prompts import PromptTemplate
-from langchain.chains import LLMChain
 from langchain_google_genai import ChatGoogleGenerativeAI
+from langchain_core.messages.utils import get_buffer_string
 
-# Load API key from environment
-api_key = os.getenv("GEMINI_API_KEY")
+# Load API key
+api_key = os.getenv("GOOGLE_API_KEY")
 if not api_key:
-    raise ValueError("⚠️ No API key found. Restart PyCharm after setting the variable.")
+    raise ValueError("⚠️ No API key found. Please set GOOGLE_API_KEY environment variable and restart.")
 
-# Configure Gemini with LangChain
-llm = ChatGoogleGenerativeAI(
-    model="gemini-1.5-flash",
-    google_api_key=api_key,
-    temperature=0.3  # lower temp = structured, factual output
-)
+# Prompt template with explicit mention of all fields + conclusion
+template_str = """
+You are a knowledgeable and compassionate medical assistant.
 
-# Enhanced structured prompt
-template = """
-You are an intelligent medical assistant. 
-Your task is to read the patient's medical record (provided in JSON format) and summarize it in a structured, detailed format.
+Your task is to analyze the patient's medical record provided in JSON format, and generate a **concise but complete structured summary**.
 
-Patient Record (JSON):
-{record}
+🔹 Rules:
+- Cover **all fields** provided in the JSON.
+- If a field is missing, null, or empty, explicitly write "None" or "Not reported."
+- Use **bold section headings**.
+- Write short, clear sentences.
+- Use bullet points for lists like symptoms, medications, past conditions.
+- At the very end, add a **bold one-line conclusion** that summarizes:
+  - Main diagnosis
+  - Critical health risk
+  - Key recommendation
 
-Provide a structured medical summary with the following fields:
+📋 Sections to include:
 
 **Patient Information**
-- Full Name
-- Age
-- Gender
-- Date of Birth
-- Contact Information
-- Address
+- patient_name
+- age
+- gender
+- date_of_birth
+- phone_number
+- email_address
+- address
 
 **Medical History**
-- Past medical conditions
-- Family medical history
-- Previous surgeries
-- Allergies
+- past_conditions
+- family_history
+- previous_surgeries
+- allergies
 
 **Current Visit**
-- Symptoms/Chief complaint
-- Current diagnosis
-- Vital signs (Blood pressure, Heart rate, Temperature, Weight, Height, BMI)
-- Physical examination findings
+- symptoms
+- current_diagnosis
+- vital signs (blood_pressure, heart_rate, temperature, weight, height, bmi)
+- physical_exam_findings
 
 **Investigations**
-- Lab results (Blood tests, Urine tests, etc.)
-- Imaging (X-ray, MRI, CT, Ultrasound)
-- Other diagnostic tests
+- lab_results
+- imaging
+- other_tests
 
 **Treatment Plan**
-- Prescribed medications (name, dosage, frequency, duration)
-- Procedures recommended
-- Lifestyle & diet recommendations
-- Physiotherapy/rehabilitation advice (if applicable)
+- prescribed_medications
+- procedures
+- lifestyle_recommendations
+- physiotherapy_advice
 
 **Follow-up**
-- Next follow-up date
-- Monitoring instructions
-- Long-term care notes
+- next_followup_date
+- monitoring_instructions
 
 **Additional Notes**
-- Doctor’s remarks
-- Special warnings (if any)
+- doctor_remarks
+- special_warnings
+
+**Conclusion**
+→ One line summary of diagnosis, risk, and recommendation.
+
+Patient Record JSON:
+{record}
 """
 
 prompt = PromptTemplate(
     input_variables=["record"],
-    template=template
+    template=template_str
 )
 
-# Create chain
-chain = LLMChain(llm=llm, prompt=prompt)
+# Initialize Gemini model
+llm = ChatGoogleGenerativeAI(
+    model="gemini-1.5-flash",
+    google_api_key=api_key,
+    temperature=0.3
+)
 
-# -------------------------------
-# Dummy JSON input (example file)
-# -------------------------------
+# Create RunnableSequence chain
+chain = RunnableSequence(prompt | llm)
+
+# Example patient JSON
 dummy_patient_json = {
-    "Patient Information": {
-        "Full Name": "Johnathan Doe",
-        "Age": 46,
-        "Gender": "Male",
-        "Date of Birth": "1979-05-14",
-        "Contact Information": "123-456-7890",
-        "Address": "221B Baker Street, London"
-    },
-    "Medical History": {
-        "Past medical conditions": ["Type 2 Diabetes (5 years)"],
-        "Family medical history": ["Mother - Diabetes"],
-        "Previous surgeries": ["Appendix removal (2001)"],
-        "Allergies": []
-    },
-    "Current Visit": {
-        "Symptoms": ["Frequent urination", "Fatigue", "Blurred vision"],
-        "Diagnosis": "Uncontrolled Diabetes",
-        "Vitals": {
-            "Blood pressure": "140/90",
-            "Heart rate": "85",
-            "Temperature": "98.7F",
-            "Weight": "85kg",
-            "Height": "175cm",
-            "BMI": "27.8"
-        }
-    },
-    "Investigations": {
-        "Lab results": {"HbA1c": "8.2%", "Fasting sugar": "170 mg/dL"},
-        "Imaging": None,
-        "Other tests": None
-    },
-    "Treatment Plan": {
-        "Medications": [
-            {"name": "Metformin", "dosage": "1000mg", "frequency": "Twice daily"},
-            {"name": "Insulin", "dosage": "10 units", "frequency": "Before breakfast"}
-        ],
-        "Lifestyle": "Low-carb diet, daily walking 30 minutes"
-    },
-    "Follow-up": {
-        "Next visit": "2025-09-30",
-        "Monitoring": "Blood sugar monitoring daily"
-    },
-    "Additional Notes": {
-        "Doctor’s remarks": "Patient needs strict diet control",
-        "Special warnings": None
-    }
+    "patient_name": "Johnathan Doe",
+    "age": 46,
+    "gender": "Male",
+    "date_of_birth": "1979-05-14",
+    "phone_number": "+1234567890",
+    "email_address": "john.doe@example.com",
+    "address": "221B Baker Street, London",
+    "past_conditions": ["Type 2 Diabetes (5 years)"],
+    "family_history": ["Mother - Diabetes"],
+    "previous_surgeries": ["Appendix removal (2001)"],
+    "allergies": [],
+    "symptoms": ["Frequent urination", "Fatigue", "Blurred vision"],
+    "current_diagnosis": "Uncontrolled Diabetes",
+    "blood_pressure": "140/90",
+    "heart_rate": "85",
+    "temperature": "98.7F",
+    "weight": "85kg",
+    "height": "175cm",
+    "bmi": "27.8",
+    "physical_exam_findings": "Normal heart sounds",
+    "lab_results": {"HbA1c": "8.2%", "Fasting sugar": "170 mg/dL"},
+    "imaging": None,
+    "other_tests": None,
+    "prescribed_medications": [
+        "Metformin 1000mg twice daily",
+        "Insulin 10 units before breakfast"
+    ],
+    "procedures": "None",
+    "lifestyle_recommendations": "Low-carb diet, daily walking 30 minutes",
+    "physiotherapy_advice": None,
+    "next_followup_date": "2025-09-30",
+    "monitoring_instructions": "Blood sugar monitoring daily",
+    "doctor_remarks": "Patient needs strict diet control",
+    "special_warnings": None
 }
 
-# Convert JSON dict to string so LLM can read it
+# Convert dict to JSON string
 json_input_str = json.dumps(dummy_patient_json, indent=2)
 
-# Run chain
-summary = chain.run(record=json_input_str)
+# Invoke chain and get AIMessage output
+raw_summary = chain.invoke({"record": json_input_str})
+
+# Convert AIMessage to plain string
+summary_text = get_buffer_string([raw_summary])
+
+# Post-process string: ensure each sentence starts on a new line
+def format_paragraphs(text):
+    return re.sub(r'\.\s+', '.\n', text)
+
+# Final formatted summary
+summary = format_paragraphs(summary_text)
 
 print("📋 Structured Medical Summary:\n")
 print(summary)
