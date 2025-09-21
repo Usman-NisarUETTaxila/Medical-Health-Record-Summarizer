@@ -11,67 +11,37 @@ api_key = os.getenv("GOOGLE_API_KEY")
 if not api_key:
     raise ValueError("⚠️ No API key found. Please set GOOGLE_API_KEY environment variable and restart.")
 
-# Prompt template with explicit mention of all fields + conclusion
+# ✅ Improved template with all fields included + risk line
 template_str = """
-You are a knowledgeable and compassionate medical assistant.
+You are a helpful medical assistant.
 
-Your task is to analyze the patient's medical record provided in JSON format, and generate a **concise but complete structured summary**.
+Your job is to take the full patient record (with many fields) and create a **user-friendly summary of 5–6 short lines**.
 
-🔹 Rules:
-- Cover **all fields** provided in the JSON.
-- If a field is missing, null, or empty, explicitly write "None" or "Not reported."
-- Use **bold section headings**.
-- Write short, clear sentences.
-- Use bullet points for lists like symptoms, medications, past conditions.
-- At the very end, add a **bold one-line conclusion** that summarizes:
-  - Main diagnosis
-  - Critical health risk
-  - Key recommendation
+Rules:
+- Always mention patient's **name and age** first.
+- If "current_diagnosis" exists → report it clearly.
+- If no disease/diagnosis → write exactly: "Patient has no reported medical conditions."
+- Mention prescribed medications (or "None").
+- Mention recovery plan (procedures, lifestyle, physiotherapy, follow-up).
+- Merge other important details (allergies, doctor remarks, warnings) in a simple way.
+- Be concise, clear, and easy to read.
+- At the very end, add a ** Risk line**:
+  - If labs/vitals/diagnosis indicate a risk → state it clearly (e.g., "High risk due to uncontrolled diabetes").
+  - If nothing serious → write "No immediate risks reported."
+  - After that, add a **Doctor’s Note** written in simple words a patient can easily understand. Avoid medical jargon.
 
-📋 Sections to include:
-
-**Patient Information**
-- patient_name
-- age
-- gender
-- date_of_birth
-- phone_number
-- email_address
-- address
-
-**Medical History**
-- past_conditions
-- family_history
-- previous_surgeries
-- allergies
-
-**Current Visit**
-- symptoms
-- current_diagnosis
+Here are all fields you must consider:
+- patient_name, age, gender, date_of_birth, phone_number, email_address, address
+- past_conditions, family_history, previous_surgeries, allergies
+- symptoms, current_diagnosis
 - vital signs (blood_pressure, heart_rate, temperature, weight, height, bmi)
 - physical_exam_findings
+- lab_results, imaging, other_tests
+- prescribed_medications, procedures, lifestyle_recommendations, physiotherapy_advice
+- next_followup_date, monitoring_instructions
+- doctor_remarks, special_warnings
 
-**Investigations**
-- lab_results
-- imaging
-- other_tests
-
-**Treatment Plan**
-- prescribed_medications
-- procedures
-- lifestyle_recommendations
-- physiotherapy_advice
-
-**Follow-up**
-- next_followup_date
-- monitoring_instructions
-
-**Additional Notes**
-- doctor_remarks
-- special_warnings
-
-**Conclusion**
-→ One line summary of diagnosis, risk, and recommendation.
+Now create a **short friendly summary** in 5–6 lines only, then finish with the risk line.
 
 Patient Record JSON:
 {record}
@@ -92,7 +62,7 @@ llm = ChatGoogleGenerativeAI(
 # Create RunnableSequence chain
 chain = RunnableSequence(prompt | llm)
 
-# Example patient JSON
+# Example patient JSON (all fields included)
 dummy_patient_json = {
     "patient_name": "Johnathan Doe",
     "age": 46,
@@ -106,7 +76,7 @@ dummy_patient_json = {
     "previous_surgeries": ["Appendix removal (2001)"],
     "allergies": [],
     "symptoms": ["Frequent urination", "Fatigue", "Blurred vision"],
-    "current_diagnosis": "Uncontrolled Diabetes",
+    "current_diagnosis": "Uncontrolled Diabetes",  # 🔹 change to None to test "no conditions"
     "blood_pressure": "140/90",
     "heart_rate": "85",
     "temperature": "98.7F",
@@ -133,18 +103,15 @@ dummy_patient_json = {
 # Convert dict to JSON string
 json_input_str = json.dumps(dummy_patient_json, indent=2)
 
-# Invoke chain and get AIMessage output
+# Run chain
 raw_summary = chain.invoke({"record": json_input_str})
-
-# Convert AIMessage to plain string
 summary_text = get_buffer_string([raw_summary])
 
-# Post-process string: ensure each sentence starts on a new line
+# Ensure line breaks for readability
 def format_paragraphs(text):
     return re.sub(r'\.\s+', '.\n', text)
 
-# Final formatted summary
 summary = format_paragraphs(summary_text)
 
-print("📋 Structured Medical Summary:\n")
+print("📋 User-Friendly Short Medical Summary:\n")
 print(summary)
