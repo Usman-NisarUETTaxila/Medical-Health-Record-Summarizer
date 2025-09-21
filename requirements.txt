@@ -1,12 +1,7 @@
 langchain
-wikipedia
-langchain-community
-langchain-openai
-langchain-anthropic
 python-dotenv
-pydantic
-duckduckgo-search
 langchain-google-genai
-google-generativeai
 gradio
 django
+djangorestframework
+django-phonenumber-field[phonenumbers]
