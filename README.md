@@ -62,7 +62,7 @@ We thank the following contributors for their valuable contributions to this pro
 - **[Hassaan Ayub](https://github.com/hassaan1821)** - *Frontend Dev*
   - University of Engineering and Technology, Taxila
  
-- **[Neha Qasim](https://github.com/Neha-Qasim)** - *Project Lead*
+- **[Neha Qasim](https://github.com/Neha-Qasim)** - *Prompt Engineer*
   - University of Engineering and Technology, Taxila
 
 *To add yourself as a collaborator, please contribute to the project and your information will be added here.*
