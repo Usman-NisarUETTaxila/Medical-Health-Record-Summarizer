@@ -18,7 +18,7 @@ if __name__ == "__main__":
     with gr.Blocks(theme=gr.themes.Soft(),css=css) as demo:
         gr.Markdown(
             """
-            #           🏥 Health Sync - Medical Report Summarizer
+            #           🏥 Medical Health Report Summarizer
             
             ---
             """
