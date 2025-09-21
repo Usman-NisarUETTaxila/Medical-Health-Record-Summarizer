@@ -1,93 +1,117 @@
 import os
+import json
+import re
+from langchain_core.runnables import RunnableSequence
 from langchain.prompts import PromptTemplate
-from langchain.chains import LLMChain
 from langchain_google_genai import ChatGoogleGenerativeAI
+from langchain_core.messages.utils import get_buffer_string
 
-# Load API key from environment
-api_key = os.getenv("GEMINI_API_KEY")
+# Load API key
+api_key = os.getenv("GOOGLE_API_KEY")
 if not api_key:
-    raise ValueError("⚠️ No API key found. Restart PyCharm after setting the variable.")
+    raise ValueError("⚠️ No API key found. Please set GOOGLE_API_KEY environment variable and restart.")
 
-# Configure Gemini with LangChain
-llm = ChatGoogleGenerativeAI(
-    model="gemini-1.5-flash",
-    google_api_key=api_key,
-    temperature=0.3  # lower temp = structured, factual output
-)
+# ✅ Improved template with all fields included + risk line
+template_str = """
+You are a helpful medical assistant.
 
-# Enhanced structured prompt
-template = """
-You are an intelligent medical assistant. 
-Your task is to read the patient's unstructured medical record and summarize it in a structured, detailed format.
+Your job is to take the full patient record (with many fields) and create a **user-friendly summary of 5–6 short lines**.
 
-Patient Record (unstructured):
+Rules:
+- Always mention patient's **name and age** first.
+- If "current_diagnosis" exists → report it clearly.
+- If no disease/diagnosis → write exactly: "Patient has no reported medical conditions."
+- Mention prescribed medications (or "None").
+- Mention recovery plan (procedures, lifestyle, physiotherapy, follow-up).
+- Merge other important details (allergies, doctor remarks, warnings) in a simple way.
+- Be concise, clear, and easy to read.
+- At the very end, add a ** Risk line**:
+  - If labs/vitals/diagnosis indicate a risk → state it clearly (e.g., "High risk due to uncontrolled diabetes").
+  - If nothing serious → write "No immediate risks reported."
+  - After that, add a **Doctor’s Note** written in simple words a patient can easily understand. Avoid medical jargon.
+
+Here are all fields you must consider:
+- patient_name, age, gender, date_of_birth, phone_number, email_address, address
+- past_conditions, family_history, previous_surgeries, allergies
+- symptoms, current_diagnosis
+- vital signs (blood_pressure, heart_rate, temperature, weight, height, bmi)
+- physical_exam_findings
+- lab_results, imaging, other_tests
+- prescribed_medications, procedures, lifestyle_recommendations, physiotherapy_advice
+- next_followup_date, monitoring_instructions
+- doctor_remarks, special_warnings
+
+Now create a **short friendly summary** in 5–6 lines only, then finish with the risk line.
+
+Patient Record JSON:
 {record}
-
-Provide a structured medical summary with the following fields:
-
-**Patient Information**
-- Full Name
-- Age
-- Gender
-- Date of Birth
-- Contact Information
-- Address
-
-**Medical History**
-- Past medical conditions
-- Family medical history
-- Previous surgeries
-- Allergies
-
-**Current Visit**
-- Symptoms/Chief complaint
-- Current diagnosis
-- Vital signs (Blood pressure, Heart rate, Temperature, Weight, Height, BMI)
-- Physical examination findings
-
-**Investigations**
-- Lab results (Blood tests, Urine tests, etc.)
-- Imaging (X-ray, MRI, CT, Ultrasound)
-- Other diagnostic tests
-
-**Treatment Plan**
-- Prescribed medications (name, dosage, frequency, duration)
-- Procedures recommended
-- Lifestyle & diet recommendations
-- Physiotherapy/rehabilitation advice (if applicable)
-
-**Follow-up**
-- Next follow-up date
-- Monitoring instructions
-- Long-term care notes
-
-**Additional Notes**
-- Doctor’s remarks
-- Special warnings (if any)
 """
 
 prompt = PromptTemplate(
     input_variables=["record"],
-    template=template
+    template=template_str
 )
 
-# Create chain
-chain = LLMChain(llm=llm, prompt=prompt)
+# Initialize Gemini model
+llm = ChatGoogleGenerativeAI(
+    model="gemini-1.5-flash",
+    google_api_key=api_key,
+    temperature=0.3
+)
 
-# Example unstructured record (raw text, messy)
-medical_record = """
-Patient seen today, Johnathan Doe, 46 years old male. Complains of frequent urination, fatigue, and blurred vision. 
-History of Type 2 Diabetes for 5 years, mother also diabetic. Past surgery: appendix removal in 2001. 
-No drug allergies. 
-Vitals: BP 140/90, HR 85, Temp 98.7F, Weight 85kg, Height 175cm. 
-HbA1c 8.2%, Fasting sugar 170 mg/dL. 
-Doctor suspects uncontrolled diabetes. 
-Prescribed Metformin 1000mg twice daily and Insulin injection 10 units before breakfast. 
-Advised low-carb diet, daily walking 30 min. 
-Next visit in 1 month (30 Sept 2025). 
-Contact: 123-456-7890, Address: 221B Baker Street, London.
-"""
+# Create RunnableSequence chain
+chain = RunnableSequence(prompt | llm)
+
+# Example patient JSON (all fields included)
+dummy_patient_json = {
+    "patient_name": "Johnathan Doe",
+    "age": 46,
+    "gender": "Male",
+    "date_of_birth": "1979-05-14",
+    "phone_number": "+1234567890",
+    "email_address": "john.doe@example.com",
+    "address": "221B Baker Street, London",
+    "past_conditions": ["Type 2 Diabetes (5 years)"],
+    "family_history": ["Mother - Diabetes"],
+    "previous_surgeries": ["Appendix removal (2001)"],
+    "allergies": [],
+    "symptoms": ["Frequent urination", "Fatigue", "Blurred vision"],
+    "current_diagnosis": "Uncontrolled Diabetes",  # 🔹 change to None to test "no conditions"
+    "blood_pressure": "140/90",
+    "heart_rate": "85",
+    "temperature": "98.7F",
+    "weight": "85kg",
+    "height": "175cm",
+    "bmi": "27.8",
+    "physical_exam_findings": "Normal heart sounds",
+    "lab_results": {"HbA1c": "8.2%", "Fasting sugar": "170 mg/dL"},
+    "imaging": None,
+    "other_tests": None,
+    "prescribed_medications": [
+        "Metformin 1000mg twice daily",
+        "Insulin 10 units before breakfast"
+    ],
+    "procedures": "None",
+    "lifestyle_recommendations": "Low-carb diet, daily walking 30 minutes",
+    "physiotherapy_advice": None,
+    "next_followup_date": "2025-09-30",
+    "monitoring_instructions": "Blood sugar monitoring daily",
+    "doctor_remarks": "Patient needs strict diet control",
+    "special_warnings": None
+}
+
+# Convert dict to JSON string
+json_input_str = json.dumps(dummy_patient_json, indent=2)
 
 # Run chain
-summary = chain.run(record=medical_record)
-print("📋 Structured Medical Summary:\n", summary)
+raw_summary = chain.invoke({"record": json_input_str})
+summary_text = get_buffer_string([raw_summary])
+
+# Ensure line breaks for readability
+def format_paragraphs(text):
+    return re.sub(r'\.\s+', '.\n', text)
+
+summary = format_paragraphs(summary_text)
+
+print("📋 User-Friendly Short Medical Summary:\n")
+print(summary)
