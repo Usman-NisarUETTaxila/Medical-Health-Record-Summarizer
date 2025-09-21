@@ -44,6 +44,13 @@ pip install -r requirements.txt
 
 ### Quick Start
 
+1. Start the backend server 
+```bash
+cd patient_system
+python manage.py runserver
+```
+
+2. Start the app
 ```bash
 cd gradio
 python app.py
