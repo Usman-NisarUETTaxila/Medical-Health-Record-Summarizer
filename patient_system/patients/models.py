@@ -25,8 +25,8 @@ class Patient(models.Model):
 
 class MedicalHistory(models.Model):
     patient = models.ForeignKey(Patient, on_delete=models.CASCADE, related_name="medical_history")
-    past_conditions = models.TextField()
-    family_history = models.TextField()
+    past_conditions = models.TextField(blank=True, null=True)
+    family_history = models.TextField(blank=True, null=True)
     previous_surgeries = models.TextField(blank=True, null=True)
     allergies = models.TextField(blank=True, null=True)
 
@@ -36,17 +36,17 @@ class MedicalHistory(models.Model):
 
 class CheckUp(models.Model):
     patient = models.ForeignKey(Patient, on_delete=models.CASCADE, related_name="checkups")
-    symptoms = models.TextField()
-    current_diagnosis = models.TextField()
-    date_of_checkup = models.DateField()
+    symptoms = models.TextField(blank=True, null=True)
+    current_diagnosis = models.TextField(blank=True, null=True)
+    date_of_checkup = models.DateField(blank=True, null=True)
 
     # Vital signs
-    blood_pressure = models.CharField(max_length=50)
-    heart_rate = models.CharField(max_length=50)
-    temperature = models.CharField(max_length=50)
-    weight = models.CharField(max_length=50)
-    height = models.CharField(max_length=50)
-    bmi = models.CharField(max_length=50)
+    blood_pressure = models.CharField(max_length=50, blank=True, null=True)
+    heart_rate = models.CharField(max_length=50, blank=True, null=True)
+    temperature = models.CharField(max_length=50, blank=True, null=True)
+    weight = models.CharField(max_length=50, blank=True, null=True)
+    height = models.CharField(max_length=50, blank=True, null=True)
+    bmi = models.CharField(max_length=50, blank=True, null=True)
 
     physical_exam_findings = models.TextField(blank=True, null=True)
 
@@ -56,7 +56,7 @@ class CheckUp(models.Model):
 
 class LabTests(models.Model):
     patient = models.ForeignKey(Patient, on_delete=models.CASCADE, related_name="labtests")
-    lab_results = models.TextField()
+    lab_results = models.TextField(blank=True, null=True)
     imaging = models.TextField(blank=True, null=True)
     other_tests = models.TextField(blank=True, null=True)
 
@@ -65,12 +65,12 @@ class LabTests(models.Model):
 
 class TreatmentPlan(models.Model):
     patient = models.ForeignKey(Patient, on_delete=models.CASCADE, related_name="treatments")
-    checkup = models.ForeignKey(CheckUp, on_delete=models.CASCADE, related_name="checkup")
-    related_disease = models.CharField(max_length=100)
-    assigned_doctor = models.CharField(max_length=100)
-    prescribed_medications = models.TextField()
-    procedures = models.TextField()
-    next_followup_date = models.DateField()
+    checkup = models.ForeignKey(CheckUp, on_delete=models.SET_NULL, related_name="treatments", blank=True, null=True)
+    related_disease = models.CharField(max_length=100, blank=True, null=True)
+    assigned_doctor = models.CharField(max_length=100, blank=True, null=True)
+    prescribed_medications = models.TextField(blank=True, null=True)
+    procedures = models.TextField(blank=True, null=True)
+    next_followup_date = models.DateField(blank=True, null=True)
     lifestyle_recommendations = models.TextField(blank=True, null=True)
     physiotherapy_advice = models.TextField(blank=True, null=True)
 
@@ -79,7 +79,7 @@ class TreatmentPlan(models.Model):
 
 class AdditionalNote(models.Model):
     patient = models.ForeignKey(Patient, on_delete=models.CASCADE, related_name="notes")
-    doctor_remarks = models.TextField()
+    doctor_remarks = models.TextField(blank=True, null=True)
     special_warnings = models.TextField(blank=True, null=True)
 
     def __str__(self):

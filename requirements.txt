@@ -5,3 +5,7 @@ gradio
 django
 djangorestframework
 django-phonenumber-field[phonenumbers]
+google-generativeai
+requests
+pytesseract
+pillow
