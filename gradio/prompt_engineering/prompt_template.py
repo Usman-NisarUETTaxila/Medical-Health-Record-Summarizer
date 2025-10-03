@@ -8,22 +8,109 @@ from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_core.messages.utils import get_buffer_string
 import requests 
 load_dotenv()
-
 class Patient_Summary_System:
     def __init__(self):
         self.api_key = None
         self.data = {}
 
-    def get_patient_data(self,url):
-        response = requests.get(url=url)
-        if response.status_code == 200:
-            self.data = response.json()
-        else:
-            self.data = {}
+    def clean_and_format_data(self, data: dict) -> dict:
+        """
+        Clean and format patient data for display
+        """
+        try:
+            cleaned_data = {}
+            
+            # Clean patient info
+            if "patient" in data:
+                patient = data["patient"]
+                cleaned_data["patient"] = {
+                    "id": patient.get("id", "N/A"),
+                    "patient_name": patient.get("patient_name", "Unknown").title(),
+                    "guardian_name": patient.get("guardian_name", "Unknown").title(),
+                    "age": f"{patient.get('age', 0)} years",
+                    "gender": patient.get("gender", "Not specified").title(),
+                    "blood_group": patient.get("blood_group", "Unknown"),
+                    "date_of_birth": patient.get("date_of_birth", "Not specified"),
+                    "phone_number": patient.get("phone_number", "Not provided"),
+                    "email_address": patient.get("email_address", "Not provided"),
+                    "address": patient.get("address", "Not provided") or "Not provided"
+                }
+            
+            # Clean medical history
+            if "medical_history" in data and data["medical_history"]:
+                history = data["medical_history"]
+                cleaned_data["medical_history"] = {
+                    "past_conditions": history.get("past_conditions", "None reported").strip() or "None reported",
+                    "family_history": history.get("family_history", "None reported").strip() or "None reported",
+                    "allergies": history.get("allergies", "None reported").strip() or "None reported",
+                    "previous_surgeries": history.get("previous_surgeries", "None reported").strip() or "None reported"
+                }
+            
+            # Clean checkups with numeric formatting
+            if "checkups" in data and data["checkups"]:
+                cleaned_checkups = []
+                for checkup in data["checkups"]:
+                    try:
+                        # Parse and format numeric values
+                        weight = float(checkup.get("weight", 0)) if checkup.get("weight") else 0
+                        height = float(checkup.get("height", 0)) if checkup.get("height") else 0
+                        heart_rate = int(float(checkup.get("heart_rate", 0))) if checkup.get("heart_rate") else 0
+                        temperature = float(checkup.get("temperature", 0)) if checkup.get("temperature") else 0
+                        
+                        cleaned_checkup = {
+                            "date_of_checkup": checkup.get("date_of_checkup", "Not specified"),
+                            "symptoms": checkup.get("symptoms", "None reported").strip() or "None reported",
+                            "current_diagnosis": checkup.get("current_diagnosis", "Not specified").strip() or "Not specified",
+                            "vital_signs": {
+                                "blood_pressure": checkup.get("blood_pressure", "Not recorded"),
+                                "heart_rate": f"{heart_rate} bpm" if heart_rate > 0 else "Not recorded",
+                                "temperature": f"{temperature}°F" if temperature > 0 else "Not recorded",
+                                "weight": f"{weight} kg" if weight > 0 else "Not recorded",
+                                "height": f"{height} cm" if height > 0 else "Not recorded",
+                                "bmi": f"{checkup.get('bmi', 'N/A')}" if checkup.get('bmi') else "Not calculated"
+                            },
+                            "physical_exam_findings": checkup.get("physical_exam_findings", "Normal").strip() or "Normal"
+                        }
+                        cleaned_checkups.append(cleaned_checkup)
+                    except Exception as e:
+                        print(f"ERROR: Checkup cleaning failed: {e}")
+                        continue
+                cleaned_data["checkups"] = cleaned_checkups
+            
+            # Clean other sections
+            for section in ["lab_tests", "treatments", "notes"]:
+                if section in data and data[section]:
+                    cleaned_data[section] = data[section]
+                else:
+                    cleaned_data[section] = []
+            
+            return cleaned_data
+            
+        except Exception as e:
+            print(f"ERROR: Data cleaning failed: {e}")
+            return data  # Return original data if cleaning fails
 
-        return self.data
+    def get_patient_data(self,url):
+        try:
+            response = requests.get(url=url, timeout=10)
+            if response.status_code == 200:
+                raw_data = response.json()
+                self.data = raw_data
+                # Clean and format the data for better display
+                return self.clean_and_format_data(raw_data)
+            elif response.status_code == 404:
+                return {"error": "Patient not found - please check the patient ID"}
+            else:
+                return {"error": f"Failed to fetch data. Status: {response.status_code}"}
+        except requests.exceptions.Timeout:
+            return {"error": "Request timeout - please check if the server is running"}
+        except requests.exceptions.ConnectionError:
+            return {"error": "Connection failed - please ensure Django server is running"}
+        except Exception as e:
+            return {"error": f"Unexpected error: {str(e)}"}
 
     def load_api_key(self):
+        """Load Google API key from environment variables"""
         self.api_key = os.getenv("GOOGLE_API_KEY")
         if not self.api_key:
             raise ValueError("⚠️ No API key found. Please set GOOGLE_API_KEY environment variable and restart.")
@@ -158,16 +245,71 @@ class Patient_Summary_System:
             
             # Helper function to convert any value to string safely
             def safe_string_convert(value):
-                if value is None or value == "":
+                try:
+                    if value is None or value == "":
+                        return ""
+                    elif isinstance(value, str):
+                        return value.strip()
+                    elif isinstance(value, list):
+                        return ", ".join(str(item).strip() for item in value if item and str(item).strip())
+                    elif isinstance(value, dict):
+                        return ", ".join(f"{k}: {v}" for k, v in value.items() if v and str(v).strip())
+                    else:
+                        return str(value).strip()
+                except Exception:
                     return ""
-                elif isinstance(value, str):
-                    return value
-                elif isinstance(value, list):
-                    return ", ".join(str(item) for item in value if item)
-                elif isinstance(value, dict):
-                    return ", ".join(f"{k}: {v}" for k, v in value.items() if v)
-                else:
-                    return str(value)
+            
+            # Helper function to extract numeric values safely
+            def safe_numeric_convert(value, default=0):
+                try:
+                    if value is None or value == "":
+                        return default
+                    # Extract numbers from string (e.g., "70 kg" -> 70)
+                    if isinstance(value, str):
+                        import re
+                        numbers = re.findall(r'\d+\.?\d*', value.strip())
+                        if numbers:
+                            return float(numbers[0])
+                        return default
+                    elif isinstance(value, (int, float)):
+                        return float(value)
+                    else:
+                        return default
+                except Exception:
+                    return default
+            
+            # Helper function to validate and clean patient ID
+            def validate_patient_id(patient_data):
+                try:
+                    # Ensure required fields exist
+                    if not patient_data.get("patient_name"):
+                        patient_data["patient_name"] = "Unknown Patient"
+                    if not patient_data.get("guardian_name"):
+                        patient_data["guardian_name"] = "Unknown Guardian"
+                    
+                    # Clean and validate age
+                    age = safe_numeric_convert(patient_data.get("age"), 0)
+                    if age < 0 or age > 150:
+                        age = 0
+                    patient_data["age"] = int(age)
+                    
+                    # Validate gender
+                    gender = patient_data.get("gender", "").strip().title()
+                    if gender not in ["Male", "Female", "Other"]:
+                        gender = "Other"
+                    patient_data["gender"] = gender
+                    
+                    # Validate blood group
+                    blood_group = patient_data.get("blood_group", "").strip().upper()
+                    valid_blood_groups = ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"]
+                    if blood_group not in valid_blood_groups:
+                        blood_group = "O+"
+                    patient_data["blood_group"] = blood_group
+                    
+                    return True
+                except Exception as e:
+                    print(f"ERROR: Patient validation failed: {e}")
+                    return False
             
             # Transform the data to match Django API expectations
             # The Django API expects: patient, medical_history, checkups, lab_tests, treatments, notes
@@ -189,28 +331,45 @@ class Patient_Summary_System:
                 "previous_surgeries": safe_string_convert(original_history.get("previous_surgeries")) or "No previous surgeries"
             }
             
-            # Ensure patient has required fields with defaults
+            # Validate and clean patient data
             if "patient" in formatted_data and formatted_data["patient"]:
                 patient_info = formatted_data["patient"]
-                # Add default values for required fields if missing
-                if "patient_name" not in patient_info:
-                    patient_info["patient_name"] = "Unknown Patient"
-                if "guardian_name" not in patient_info:
-                    patient_info["guardian_name"] = "Unknown Guardian"
-                if "age" not in patient_info:
-                    patient_info["age"] = 0
-                if "gender" not in patient_info:
-                    patient_info["gender"] = "Other"
-                if "blood_group" not in patient_info:
-                    patient_info["blood_group"] = "O+"
-                if "date_of_birth" not in patient_info:
-                    patient_info["date_of_birth"] = "2000-01-01"
-                if "phone_number" not in patient_info:
+                
+                # Validate patient data
+                if not validate_patient_id(patient_info):
+                    return {
+                        "success": False,
+                        "error": "Patient data validation failed",
+                        "details": "Invalid patient information provided"
+                    }
+                
+                # Add missing fields with defaults
+                if "date_of_birth" not in patient_info or not patient_info["date_of_birth"]:
+                    # Try to calculate from age if available
+                    try:
+                        from datetime import date
+                        current_year = date.today().year
+                        age = patient_info.get("age", 0)
+                        birth_year = current_year - age if age > 0 else 2000
+                        patient_info["date_of_birth"] = f"{birth_year}-01-01"
+                    except Exception:
+                        patient_info["date_of_birth"] = "2000-01-01"
+                
+                if "phone_number" not in patient_info or not patient_info["phone_number"]:
                     import random
-                    patient_info["phone_number"] = f"+1234567{random.randint(1000, 9999)}"  # Unique phone number
-                if "email_address" not in patient_info:
+                    patient_info["phone_number"] = f"+1234567{random.randint(1000, 9999)}"
+                
+                if "email_address" not in patient_info or not patient_info["email_address"]:
                     import random
-                    patient_info["email_address"] = f"patient{random.randint(1000, 9999)}@example.com"
+                    # Create email from patient name if available
+                    name = patient_info.get("patient_name", "patient").lower().replace(" ", "")
+                    patient_info["email_address"] = f"{name}{random.randint(100, 999)}@example.com"
+            else:
+                return {
+                    "success": False,
+                    "error": "No patient data provided",
+                    "details": "Patient information is required"
+                }
             
             
             # Process checkups with proper defaults
@@ -220,26 +379,65 @@ class Patient_Summary_System:
             elif not isinstance(checkups, list):
                 checkups = []
             
-            # Add defaults to each checkup
+            # Add defaults to each checkup with numeric validation
             processed_checkups = []
             for checkup in checkups:
                 if isinstance(checkup, dict):
-                    # Handle nested vitals structure
-                    vitals = checkup.get("vitals", {})
-                    
-                    processed_checkup = {
-                        "symptoms": safe_string_convert(checkup.get("symptoms")) or "General checkup",
-                        "current_diagnosis": safe_string_convert(checkup.get("current_diagnosis")) or "Routine examination",
-                        "date_of_checkup": checkup.get("date_of_checkup") or "2024-01-01",
-                        "blood_pressure": safe_string_convert(vitals.get("blood_pressure") or checkup.get("blood_pressure")) or "120/80",
-                        "heart_rate": safe_string_convert(vitals.get("pulse_rate") or vitals.get("heart_rate") or checkup.get("heart_rate")) or "72",
-                        "temperature": safe_string_convert(vitals.get("temperature") or checkup.get("temperature")) or "98.6",
-                        "weight": safe_string_convert(vitals.get("weight") or checkup.get("weight")) or "70",
-                        "height": safe_string_convert(vitals.get("height") or checkup.get("height")) or "170",
-                        "bmi": safe_string_convert(vitals.get("bmi") or checkup.get("bmi")) or "24.2",
-                        "physical_exam_findings": safe_string_convert(checkup.get("physical_exam_findings")) or "Normal"
-                    }
-                    processed_checkups.append(processed_checkup)
+                    try:
+                        # Handle nested vitals structure
+                        vitals = checkup.get("vitals", {})
+                        
+                        # Extract and validate numeric values
+                        weight = safe_numeric_convert(vitals.get("weight") or checkup.get("weight"), 70)
+                        height = safe_numeric_convert(vitals.get("height") or checkup.get("height"), 170)
+                        heart_rate = safe_numeric_convert(vitals.get("pulse_rate") or vitals.get("heart_rate") or checkup.get("heart_rate"), 72)
+                        temperature = safe_numeric_convert(vitals.get("temperature") or checkup.get("temperature"), 98.6)
+                        
+                        # Calculate BMI if weight and height are available
+                        try:
+                            if weight > 0 and height > 0:
+                                height_m = height / 100 if height > 10 else height  # Convert cm to m if needed
+                                bmi = weight / (height_m ** 2)
+                                bmi = round(bmi, 1)
+                            else:
+                                bmi = safe_numeric_convert(vitals.get("bmi") or checkup.get("bmi"), 24.2)
+                        except Exception:
+                            bmi = 24.2
+                        
+                        # Validate date
+                        checkup_date = checkup.get("date_of_checkup")
+                        if not checkup_date:
+                            from datetime import date
+                            checkup_date = date.today().strftime("%Y-%m-%d")
+                        
+                        processed_checkup = {
+                            "symptoms": safe_string_convert(checkup.get("symptoms")) or "General checkup",
+                            "current_diagnosis": safe_string_convert(checkup.get("current_diagnosis")) or "Routine examination",
+                            "date_of_checkup": checkup_date,
+                            "blood_pressure": safe_string_convert(vitals.get("blood_pressure") or checkup.get("blood_pressure")) or "120/80",
+                            "heart_rate": str(int(heart_rate)),
+                            "temperature": str(round(temperature, 1)),
+                            "weight": str(round(weight, 1)),
+                            "height": str(round(height, 1)),
+                            "bmi": str(bmi),
+                            "physical_exam_findings": safe_string_convert(checkup.get("physical_exam_findings")) or "Normal"
+                        }
+                        processed_checkups.append(processed_checkup)
+                    except Exception as e:
+                        print(f"ERROR: Checkup processing failed: {e}")
+                        # Add minimal checkup data on error
+                        processed_checkups.append({
+                            "symptoms": "Data processing error",
+                            "current_diagnosis": "Unable to process checkup data",
+                            "date_of_checkup": "2024-01-01",
+                            "blood_pressure": "120/80",
+                            "heart_rate": "72",
+                            "temperature": "98.6",
+                            "weight": "70",
+                            "height": "170",
+                            "bmi": "24.2",
+                            "physical_exam_findings": "Error in data processing"
+                        })
             
             formatted_data["checkups"] = processed_checkups
             
