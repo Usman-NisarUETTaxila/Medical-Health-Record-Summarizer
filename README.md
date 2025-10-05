@@ -20,7 +20,7 @@ This repository contains the development and testing framework for an app specif
 ### Prerequisites
 
 - Python 3.8 or higher
-- Node js and npm Version 20 or higher
+- Node js Version 22 or higher and npm Version 10 or higher 
 - Tesseract for OCR
 - pip package manager
 - Virtual environment (recommended)
