@@ -20,6 +20,9 @@ from .serializer import (
     TreatmentPlanSerializer, 
     AdditionalNoteSerializer
 )
+import os
+import sys
+import json
 
 # Api Views
 @api_view(['POST', 'GET', 'PUT', 'DELETE'])
@@ -135,9 +138,11 @@ def create_complete_patient(request):
                 if treatment_data:
                     treatment_data['patient'] = patient.id
                     
-                    # Link to checkup if available
+                    # Link to checkup if available, otherwise leave it None
                     if created_checkups and 'checkup' not in treatment_data:
                         treatment_data['checkup'] = created_checkups[0].id
+                    elif 'checkup' not in treatment_data:
+                        treatment_data['checkup'] = None
                     
                     treatment_serializer = TreatmentPlanSerializer(data=treatment_data)
                     if treatment_serializer.is_valid():

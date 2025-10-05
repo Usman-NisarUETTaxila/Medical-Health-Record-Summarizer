@@ -31,6 +31,8 @@ class MedicalHistorySerializer(serializers.ModelSerializer):
             'family_history', 'previous_surgeries', 'allergies'
         ]
         extra_kwargs = {
+            'past_conditions': {'required': False, 'allow_blank': True},
+            'family_history': {'required': False, 'allow_blank': True},
             'previous_surgeries': {'required': False, 'allow_blank': True},
             'allergies': {'required': False, 'allow_blank': True},
         }
@@ -38,7 +40,6 @@ class MedicalHistorySerializer(serializers.ModelSerializer):
 
 class CheckUpSerializer(serializers.ModelSerializer):
     patient_name = serializers.CharField(source='patient.patient_name', read_only=True)
-    
     class Meta:
         model = CheckUp
         fields = [
@@ -47,6 +48,15 @@ class CheckUpSerializer(serializers.ModelSerializer):
             'weight', 'height', 'bmi', 'physical_exam_findings'
         ]
         extra_kwargs = {
+            'symptoms': {'required': False, 'allow_blank': True},
+            'current_diagnosis': {'required': False, 'allow_blank': True},
+            'date_of_checkup': {'required': False},
+            'blood_pressure': {'required': False, 'allow_blank': True},
+            'heart_rate': {'required': False, 'allow_blank': True},
+            'temperature': {'required': False, 'allow_blank': True},
+            'weight': {'required': False, 'allow_blank': True},
+            'height': {'required': False, 'allow_blank': True},
+            'bmi': {'required': False, 'allow_blank': True},
             'physical_exam_findings': {'required': False, 'allow_blank': True},
         }
 
@@ -67,6 +77,7 @@ class LabTestsSerializer(serializers.ModelSerializer):
             'imaging', 'other_tests'
         ]
         extra_kwargs = {
+            'lab_results': {'required': False, 'allow_blank': True},
             'imaging': {'required': False, 'allow_blank': True},
             'other_tests': {'required': False, 'allow_blank': True},
         }
@@ -85,14 +96,30 @@ class TreatmentPlanSerializer(serializers.ModelSerializer):
             'physiotherapy_advice'
         ]
         extra_kwargs = {
+            'checkup': {'required': False},
+            'related_disease': {'required': False, 'allow_blank': True},
+            'assigned_doctor': {'required': False, 'allow_blank': True},
+            'prescribed_medications': {'required': False, 'allow_blank': True},
+            'procedures': {'required': False, 'allow_blank': True},
+            'next_followup_date': {'required': False},
             'lifestyle_recommendations': {'required': False, 'allow_blank': True},
             'physiotherapy_advice': {'required': False, 'allow_blank': True},
         }
 
     def validate_next_followup_date(self, value):
+        # Allow None values and skip validation for empty dates
+        if value is None or value == "":
+            return None
         from datetime import date
-        if value < date.today():
-            raise serializers.ValidationError("Follow-up date cannot be in the past.")
+        if isinstance(value, str):
+            try:
+                from datetime import datetime
+                value = datetime.strptime(value, "%Y-%m-%d").date()
+            except:
+                return None
+        if value and value < date.today():
+            # Don't raise error, just set to None for past dates
+            return None
         return value
 
 
@@ -106,5 +133,6 @@ class AdditionalNoteSerializer(serializers.ModelSerializer):
             'special_warnings'
         ]
         extra_kwargs = {
+            'doctor_remarks': {'required': False, 'allow_blank': True},
             'special_warnings': {'required': False, 'allow_blank': True},
         }
