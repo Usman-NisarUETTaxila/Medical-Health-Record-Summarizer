@@ -85,6 +85,11 @@ We thank the following contributors for their valuable contributions to this pro
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
+## Acknowledgement
+
+Thanks to Lovable.dev and our Frontend Dev for powering the project with enhanced UI.
+Thanks to Windsurf for Agentic AI Coding.
+
 ## 🏥 Medical Disclaimer
 
 **Important**: This software is intended for research and development purposes. It should not be used as a substitute for professional medical advice, diagnosis, or treatment. Always consult with qualified healthcare professionals for medical decisions.
