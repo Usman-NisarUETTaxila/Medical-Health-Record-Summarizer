@@ -20,6 +20,8 @@ This repository contains the development and testing framework for an app specif
 ### Prerequisites
 
 - Python 3.8 or higher
+- Node js and npm Version 20 or higher
+- Tesseract for OCR
 - pip package manager
 - Virtual environment (recommended)
 
@@ -42,6 +44,11 @@ source venv/bin/activate  # On Windows: venv\Scripts\activate
 pip install -r requirements.txt
 ```
 
+```bash
+cd gradio/ui/clinic-intellect-main
+npm install
+```
+
 ### Quick Start
 
 1. Start the backend server 
@@ -50,10 +57,10 @@ cd patient_system
 python manage.py runserver
 ```
 
-2. Start the app
+2. Start the Frontend app
 ```bash
-cd gradio
-python app.py
+cd gradio/ui/clinic-intellect-main
+npm run dev
 ```
 
 ## 👥 Collaborators
