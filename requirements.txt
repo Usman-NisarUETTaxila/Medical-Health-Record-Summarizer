@@ -1,7 +1,6 @@
 langchain
 python-dotenv
 langchain-google-genai
-gradio
 django
 djangorestframework
 django-cors-headers
