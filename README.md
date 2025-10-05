@@ -87,8 +87,8 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## Acknowledgement
 
-Thanks to Lovable.dev and our Frontend Dev for powering the project with enhanced UI.
-Thanks to Windsurf for Agentic AI Coding.
+- Thanks to Lovable.dev and our Frontend Dev for powering the project with enhanced UI.
+- Thanks to Windsurf for Agentic AI Coding.
 
 ## 🏥 Medical Disclaimer
 
