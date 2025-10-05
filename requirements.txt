@@ -4,8 +4,10 @@ langchain-google-genai
 gradio
 django
 djangorestframework
+django-cors-headers
 django-phonenumber-field[phonenumbers]
 google-generativeai
 requests
 pytesseract
 pillow
+pdfplumber

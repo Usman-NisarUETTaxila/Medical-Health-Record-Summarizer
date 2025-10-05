@@ -40,11 +40,13 @@ INSTALLED_APPS = [
     'patients',
     'rest_framework',
     'phonenumber_field',
+    'corsheaders',
 ]
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
@@ -70,6 +72,9 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = 'patient_system.wsgi.application'
+
+CORS_ALLOWED_REGEX = r"^/api/.*"
+CORS_ALLOWED_ORIGINS = ["http://localhost:8080", "http://localhost:8000"]
 
 
 # Database
